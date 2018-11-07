@@ -31,12 +31,12 @@ services:
             - PUID=1000
             
     plex:
-        image: kwull/pms-docker
+        image: plexinc/pms-docker:plexpass
         container_name: plex
         network_mode: "host"
         volumes:
             - /docker/plex/config:/config
-            - /docker/plex/transcode:/transcode
+            - /tmp/ramdisk:/transcode
             - /media/nas/Transmission/Completed:/media/Completed
             - /media/nas/Video:/media/Video
             - /media/nas/Music:/media/Music
@@ -47,6 +47,7 @@ services:
         privileged: true
         environment:
 #            - VERSION=latest
+#            - PLEX_CLAIM=claim-xxx
             - TZ=Europe/Minsk
             - PGID=1000
             - PUID=1000
@@ -68,7 +69,7 @@ services:
             - PUID=1000
 
     unifi:
-        image: linuxserver/unifi
+        image: linuxserver/unifi:unstable
         container_name: unifi
         volumes:
             - /etc/localtime:/etc/localtime:ro
@@ -108,14 +109,17 @@ services:
             - TZ=Europe/Minsk
 
     yolo:
-       image: kwull/yolo-docker
+       image: kwull/yolo-detector
        container_name: yolo
        volumes:
            - /etc/localtime:/etc/localtime:ro
            - /docker/yolo:/config
            - /media/nas/cctv/motion:/cctv/motion
            - /media/nas/cctv/tagged:/cctv/tagged
+           - /docker/unifi-video/logs:/darknet/nvr:ro
        restart: always
+       depends_on:
+           - mosquitto
        environment:
            - PGID=1000
            - PUID=1000
@@ -133,8 +137,8 @@ services:
          environment:
             - PUID=1000
             - PGID=1000
-            - EMAIL=kwull@kwull.com
-            - URL=kwull.com
+            - EMAIL=xxx@xxx.com
+            - URL=xxx.com
             - SUBDOMAINS=home,plex,plexpy,api,unifi,machine,transmission,zeus
             - VALIDATION=http
 #            - DNSPLUGIN=rfc2136
@@ -159,7 +163,7 @@ services:
             - TZ=Europe/Minsk
 
     nodered:
-         image: nodered/node-red-docker
+         image: nodered/node-red-docker:v8
          container_name: nodered
          ports:
             - 1880:1880
@@ -215,8 +219,10 @@ services:
       volumes:
         - /docker/hass/config:/config
         - /etc/localtime:/etc/localtime:ro
+        - /media/nas/cctv/tagged:/cctv/tagged
       devices:
         - /dev/ttyUSB0:/dev/ttyUSB0
+        - /dev/ttyACM0:/dev/ttyACM0
       restart: always
       network_mode: host
       depends_on:
@@ -227,3 +233,11 @@ services:
             - PUID=1000
             - PGID=1000
             - TZ=Europe/Minsk
+
+    speedtest:
+         image: adolfintel/speedtest:latest
+         container_name: speedtest
+         ports:
+            - 8888:80
+         restart: always
+
